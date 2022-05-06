@@ -21,23 +21,30 @@ typedef struct QNode {
 	size_t count;
 }Queue;
 
+
 void queue_init(Queue* q);
 void queue_push(Queue* q, void* data);
 void* queue_pop(Queue* q);
 
 
+typedef struct {
+	int x;
+	int y;
+} Vector2;
 
 
 typedef struct {
-	double x;
-	double y;
-} Vector2;
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
+} rgb;
 
 typedef struct {
 	uint8_t cost;
 	Vector2 position;
-	uint8_t graph_group;
-	void* data;
+
+	rgb data;
+
 	uint64_t path_from;
 	uint8_t visited;
 } Node;
@@ -53,13 +60,12 @@ struct AdjMatrix {
 
 AdjMatrix* create_graph(size_t max_nodes);
 
-/*
-* Creer un node, lui attribuer le data et l'ajouter dans la matrice d'adjacence.
-*/
-void add_node(AdjMatrix* graph, void* data, Vector2 pos);
+void add_node(AdjMatrix* graph, rgb* data, Vector2 pos);
 
-/*
-* Ajouter un lien dans la matrice d'adjacence, d'un noeud a l'autre noeud, en specifiant le cout y etant relier.
-*/
 void add_edge(AdjMatrix* graph, int fromNode, int toNode, uint8_t cost);
 
+void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath);
+
+void astar_AdjList(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath);
+
+uint32_t CtoEnd(AdjMatrix* graph, Node* from, Node* to);

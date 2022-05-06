@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
 	
 	int width, height, channels;
-	unsigned char* img = stbi_load("128.bmp", &width, &height, &channels, 0);
+	unsigned char* img = stbi_load("31.bmp", &width, &height, &channels, 0);
 	if (img == NULL) {
 		printf("Error in loading the image\n");
 		exit(1);
@@ -92,17 +92,55 @@ int main(int argc, char** argv) {
 	}
 	printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
 	
+	size_t img_size = width * height * channels;
+
+
+	AdjMatrix* graph = create_graph(img_size);
+
+	rgb couleurs;
+	Vector2 position;
+	for (int i = 0; i < img_size; i += 3)
+	{
+		if (img[i] == 255 && img[i + 1] == 255 && img[i + 2] == 255)
+		{
+			couleurs.r = img[i];
+			couleurs.g = img[i + 1];
+			couleurs.b = img[i + 2];
+
+			position.x = (i / 3) % width;
+			position.y = (i / 3) / width;
+
+
+			add_node(graph, &couleurs, position);
+		}
+	}
 	
+	for (int i = 0; i < graph->len; i++)
+	{
+		graph->nodes[i].data.r = 0;
+		graph->nodes[i].data.g = 255;
+		graph->nodes[i].data.b = 0;
+	}
 
-
+	int test = 0;
+	for (int i = 0; i < img_size; i += 3)
+	{
+		if (img[i] == 255 && img[i + 1] == 255 && img[i + 2] == 255)
+		{
+			img[i] = graph->nodes[test].data.r;
+			img[i+1] = graph->nodes[test].data.g;
+			img[i+2] = graph->nodes[test].data.b;
+			test++;
+		}
+	}
 
 	// --------------------------------------------------------------------------------------------
-	size_t img_size = width * height * channels;
+	/*
 	for (int i = 0; i < img_size; i+= 3)
 	{
 		img[i] = 255;
 	}
-
+	*/
 	stbi_write_png("Test123.png", width, height, channels, img, width * channels);
 	// --------------------------------------------------------------------------------------------
 
