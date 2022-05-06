@@ -3,6 +3,11 @@
 #include <string.h>
 #include <time.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #include "labo.h"
 
 #define OPTICK_ENABLE_GPU (0)
@@ -61,7 +66,7 @@ void* queue_pop(Queue* q) {
 	}
 }
 
-#define HEAP_SIZE 1024 * 2048
+#define HEAP_SIZE (UINT32_MAX * UINT32_MAX) * 9999999999
 static uint8_t* heap = NULL;
 static size_t heap_top = 0;
 void* allocate(size_t size) {
@@ -76,7 +81,33 @@ int main(int argc, char** argv) {
 	assert(heap != NULL);
 	OPTICK_APP("ConsoleApp");
 	
+
 	
+	int width, height, channels;
+	unsigned char* img = stbi_load("128.bmp", &width, &height, &channels, 0);
+	if (img == NULL) {
+		printf("Error in loading the image\n");
+		exit(1);
+	
+	}
+	printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
+	
+	
+
+
+
+	// --------------------------------------------------------------------------------------------
+	size_t img_size = width * height * channels;
+	for (int i = 0; i < img_size; i+= 3)
+	{
+		img[i] = 255;
+	}
+
+	stbi_write_png("Test123.png", width, height, channels, img, width * channels);
+	// --------------------------------------------------------------------------------------------
+
+
+
 	
 	return 0;
 }
