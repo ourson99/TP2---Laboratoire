@@ -40,7 +40,7 @@ typedef struct {
 } rgb;
 
 typedef struct {
-	uint8_t cost;
+	uint64_t cost;
 	Vector2 position;
 
 	rgb data;
@@ -58,6 +58,8 @@ struct AdjMatrix {
 };
 
 
+
+
 AdjMatrix* create_graph(size_t max_nodes);
 
 void add_node(AdjMatrix* graph, rgb* data, Vector2 pos);
@@ -68,4 +70,8 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 
 void astar_AdjList(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath);
 
-uint32_t CtoEnd(AdjMatrix* graph, Node* from, Node* to);
+double CtoEnd(AdjMatrix* graph, Node* from, Node* to);
+
+void CheckAdjacencyMatrix(AdjMatrix* graph);
+
+void ColorPath(Node* node);

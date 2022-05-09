@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
 	
 	int width, height, channels;
-	unsigned char* img = stbi_load("31.bmp", &width, &height, &channels, 0);
+	unsigned char* img = stbi_load("128.bmp", &width, &height, &channels, 0);
 	if (img == NULL) {
 		printf("Error in loading the image\n");
 		exit(1);
@@ -115,16 +115,18 @@ int main(int argc, char** argv) {
 		}
 	}
 	
-	for (int i = 0; i < graph->len; i++)
-	{
-		graph->nodes[i].data.r = 0;
-		graph->nodes[i].data.g = 255;
-		graph->nodes[i].data.b = 0;
-	}
+
+	CheckAdjacency(graph);
+
+	Stack path = stack_init(graph->len);
+	astar_AdjMatrix(graph, 0, graph->len, &path);
+
+
 
 	int test = 0;
 	for (int i = 0; i < img_size; i += 3)
 	{
+		// Si le pixel est blanc, assigne la valeur de couleur du graph à l'image
 		if (img[i] == 255 && img[i + 1] == 255 && img[i + 2] == 255)
 		{
 			img[i] = graph->nodes[test].data.r;

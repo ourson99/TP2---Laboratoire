@@ -1,7 +1,7 @@
 #include "labo.h"
 #include <math.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 AdjMatrix* create_graph(size_t max_nodes) {
 	AdjMatrix* graph = (AdjMatrix*)allocate(sizeof(AdjMatrix));
@@ -10,14 +10,14 @@ AdjMatrix* create_graph(size_t max_nodes) {
 	graph->nodes = (Node*)allocate(sizeof(Node) * max_nodes);
 	for (int i = 0; i < max_nodes; ++i) {
 		Node* n = &graph->nodes[i];
-		n->cost = 1;
+		n->cost = UINT64_MAX;
 		n->visited = 0;
 
 		n->data.r = NULL;
 		n->data.g = NULL;
 		n->data.b = NULL;
 
-		n->path_from = UINT8_MAX;
+		n->path_from = UINT64_MAX;
 	}
 	graph->adjGraph = (int**)allocate(sizeof(int*) * max_nodes);
 	for (int i = 0; i < max_nodes; ++i) {
@@ -46,97 +46,138 @@ void add_edge(AdjMatrix* graph, int fromNode, int toNode, uint8_t cost)
 
 
 
-uint32_t CtoEnd(AdjMatrix* graph, Node* from, Node* to)
+double CtoEnd(AdjMatrix* graph, Node* from, Node* to)
 {
 	
-	uint32_t x = abs(from->position.x - to->position.x) * abs(from->position.x - to->position.x);
+	double x = fabs(from->position.x - to->position.x) * fabs(from->position.x - to->position.x);
 	
-	uint32_t y = abs(from->position.y - to->position.y) * abs(from->position.y - to->position.y);
+	double y = fabs(from->position.y - to->position.y) * fabs(from->position.y - to->position.y);
 
-	uint32_t square = x + y;
+	double square = x + y;
 
-	uint32_t c = sqrt(square);
+	double c = sqrt(square);
 
 
 
 	return c;
 }
 
+
+
 void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
 {
-	while (solvedPath->top != -1) // Vide la stack
+	while (solvedPath->top != -1)
 	{
 		stack_pop(solvedPath);
 	}
 
-	// Init et allocate Q
 	Queue* q = (Queue*)allocate(sizeof(Queue));
 	queue_init(q);
 
-	// Node assignation et Coût ini à 0
 	Node* t = &graph->nodes[startNodeIndex];
-	queue_push(q, t); // push
+	queue_push(q, t);
 	graph->nodes[startNodeIndex].cost = 0;
-
-
-
+	
 
 	while (t != NULL)
 	{
-		t = (Node*)queue_pop(q); // pop
-		if (t == NULL)
+
+		t = (Node*)queue_pop(q);
+		if (t == NULL || (t->position.x == 0 && t->position.y == 0))
 		{
 			break;
 		}
 		t->visited = 1;
 
-		if (t == &graph->nodes[endNodeIndex]) // 'continue' va skip la prochaine itération de for a la ligne 108
+		if (t == &graph->nodes[endNodeIndex])
 		{
 			break;
 		}
 
-		for (int e = 0; e < graph->len; e++)
+		for (int from = 0; from < graph->len; from++)
 		{
-			for (int j = 0; j < graph->len; j++)
+			for (int to = 0; to < graph->len; to++)
 			{
 				// On regarde si le chemin existe et qu'il est un voisin de la node actuelle
-				if (graph->adjGraph[e][j] != 0 && t == &graph->nodes[e]) // Je pars de la bonne place et il y a un chemin
+				if (graph->adjGraph[from][to] != 0 &&
+					t == &graph->nodes[from]) // Je pars de la bonne place et il y a un chemin
 				{
+
 					// Si le voisin n'est pas visité et que le coût n'est pas modifié
 					// OU 
 					// Coût node arrivée > coût node depart + coût chemin
-					if ((graph->nodes[j].visited == 0 && graph->nodes[j].cost == UINT8_MAX) || (graph->nodes[j].cost > graph->nodes[e].cost + graph->adjGraph[e][j]))
+					if ((graph->nodes[to].visited == 0 && 
+						graph->nodes[to].cost == UINT64_MAX) ||
+						(graph->nodes[to].cost > graph->nodes[from].cost + graph->adjGraph[from][to]))
 					{
-						uint32_t coutPlus = CtoEnd(graph, &graph->nodes[j], &graph->nodes[endNodeIndex]);
-						// Pousse le prochain voisin non visité dans la queue, update son cost et ajuste son chemin
-						queue_push(q, &graph->nodes[j]);
-						graph->nodes[j].cost = graph->adjGraph[e][j] + t->cost + coutPlus;
-						graph->nodes[j].path_from = e;
+
+						double coutPlus = CtoEnd(graph, &graph->nodes[to], &graph->nodes[endNodeIndex-1]);
+
+						queue_push(q, &graph->nodes[to]);
+						graph->nodes[to].cost = graph->adjGraph[from][to] + t->cost + coutPlus;
+						graph->nodes[to].path_from = from;
 					}
 				}
 			}
 		}
 	}
 
-	// Assigne t a valeur de fin pour remplir la stack dans le bon sens (À travers les rev paths)
-	t = &graph->nodes[endNodeIndex];
+	t = &graph->nodes[endNodeIndex - 1];
+	ColorPath(t);
 
 	stack_push(solvedPath, t);
 	while (t != &graph->nodes[startNodeIndex])
 	{
 		t = &graph->nodes[t->path_from];
 
-		// colorie en rouge
-		t->data.r = 255;
-		t->data.g = 0;
-		t->data.b = 0;
+		ColorPath(t);
 
 		stack_push(solvedPath, t);
-
 	}
+
 }
 
 void astar_AdjList(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
 {
 
+}
+
+void CheckAdjacencyMatrix(AdjMatrix* graph)
+{
+	for (int i = 0; i < graph->len; i++)
+	{
+		//left Adj
+		if (i != 0 && // Si pas pixel blanc #1 (Erreur except levée)
+			graph->nodes[i].position.x - 1 == graph->nodes[i - 1].position.x &&
+			graph->nodes[i].position.y == graph->nodes[i - 1].position.y)
+		{
+			add_edge(graph, i, i - 1, 1);
+			add_edge(graph, i - 1, i, 1);
+		}
+
+		//top Adj
+		if (graph->nodes[i].position.y != 0) // Si pas 1er etage
+		{
+			int pos = i;
+			while (pos != -1 &&
+				graph->nodes[pos].position.y != -1)
+			{
+				if (graph->nodes[i].position.x == graph->nodes[pos].position.x &&
+					graph->nodes[i].position.y - 1 == graph->nodes[pos].position.y)
+				{
+					add_edge(graph, i, pos, 1);
+					add_edge(graph, pos, i, 1);
+				}
+
+				pos--;
+			}
+		}
+	}
+}
+
+void ColorPath(Node* node)
+{
+	node->data.r = 255;
+	node->data.g = 0;
+	node->data.b = 0;
 }
