@@ -3,6 +3,34 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+List_Adj* create_list(size_t max_nodes) {
+	List_Adj* list = (List_Adj*)allocate(sizeof(List_Adj));
+	list->len = 0;
+	list->max_size = max_nodes;
+	list->nodes = (Node_adj*)allocate(sizeof(Node_adj) * max_nodes);
+
+	
+
+	for (int i = 0; i < max_nodes; ++i) {
+		Node_adj* n = &list->nodes[i];
+		n->cost = UINT64_MAX;
+		n->visited = 0;
+		n->len = 0;
+
+		n->position.x = 99999;
+		n->position.y = 99999;
+
+		n->data.r = NULL;
+		n->data.g = NULL;
+		n->data.b = NULL;
+
+		n->path_from = UINT64_MAX;
+	}
+
+
+	return list;
+}
+
 AdjMatrix* create_graph(size_t max_nodes) {
 	AdjMatrix* graph = (AdjMatrix*)allocate(sizeof(AdjMatrix));
 	graph->len = 0;
@@ -33,9 +61,30 @@ AdjMatrix* create_graph(size_t max_nodes) {
 void add_node(AdjMatrix* graph, rgb* data, Vector2 pos) {
 	Node* n = &graph->nodes[graph->len++];
 
-	// ----------------------------------------------------------------- Ajouté un * avant data
 	n->data = *data;
 	n->position = pos;
+}
+
+
+
+void add_node_list(List_Adj* list, rgb* data, Vector2 pos) {
+	Node_adj* n = &list->nodes[list->len++];
+
+	n->data = *data;
+	n->position = pos;
+}
+
+void add_adj(List_Adj* list, int fromNode, int toNode, uint8_t cost) // New and might not work
+{
+	int from_len = list->nodes[fromNode].len;
+	list->nodes[fromNode].adj[from_len] = &list->nodes[toNode];
+	list->nodes[fromNode].len++;
+
+	int to_len = list->nodes[toNode].len;
+	list->nodes[toNode].adj[to_len] = &list->nodes[fromNode];
+	list->nodes[toNode].len++;
+
+	// Cost à implementer ? 
 }
 
 
@@ -137,7 +186,7 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 
 }
 
-void astar_AdjList(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
+void astar_AdjList(List_Adj* list, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
 {
 
 }
@@ -167,6 +216,39 @@ void CheckAdjacencyMatrix(AdjMatrix* graph)
 				{
 					add_edge(graph, i, pos, 1);
 					add_edge(graph, pos, i, 1);
+				}
+
+				pos--;
+			}
+		}
+	}
+}
+
+void CheckAdjacentNode(List_Adj* list)
+{
+	for (int i = 0; i < list->len; i++)
+	{
+		//left Adj
+		if (i != 0 && // Si pas pixel blanc #1 (Erreur except levée)
+			list->nodes[i].position.x - 1 == list->nodes[i - 1].position.x &&
+			list->nodes[i].position.y == list->nodes[i - 1].position.y)
+		{
+			add_adj(list, i, i - 1, 1);
+			add_adj(list, i - 1, i, 1);
+		}
+
+		//top Adj
+		if (list->nodes[i].position.y != 0) // Si pas 1er etage
+		{
+			int pos = i;
+			while (pos != -1 &&
+				list->nodes[pos].position.y != -1)
+			{
+				if (list->nodes[i].position.x == list->nodes[pos].position.x &&
+					list->nodes[i].position.y - 1 == list->nodes[pos].position.y)
+				{
+					add_adj(list, i, pos, 1);
+					add_adj(list, pos, i, 1);
 				}
 
 				pos--;
