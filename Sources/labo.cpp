@@ -84,7 +84,6 @@ void add_adj(List_Adj* list, int fromNode, int toNode, uint8_t cost)
 	list->nodes[toNode].adj[to_len] = &list->nodes[fromNode];
 	list->nodes[toNode].len++;
 
-	// Cost à implementer ? 
 }
 
 
@@ -214,11 +213,9 @@ void astar_AdjList(List_Adj* list, int startNodeIndex, int endNodeIndex, Stack* 
 	queue_push(q, t);
 	list->nodes[startNodeIndex].cost = 0;
 
-	int a = 0;
-	int b = 0;
 	while (t != NULL)
 	{
-		printf("Pop #%d\n", a++);
+
 		t = (Node_adj*)queue_pop(q);
 		if (t == NULL || (t->position.x == 0 && t->position.y == 0))
 		{
@@ -235,9 +232,9 @@ void astar_AdjList(List_Adj* list, int startNodeIndex, int endNodeIndex, Stack* 
 		for (int i = 0; i < t->len; i++)
 		{
 			if ((t->adj[i]->visited == 0 &&
-				t->adj[i]->cost == UINT64_MAX) ||
-				t->adj[i]->cost > t->cost)
+				t->adj[i]->cost == UINT64_MAX))
 			{
+
 				double coutPlus = CtoEnd_List(t->adj[i], &list->nodes[endNodeIndex - 1]);
 
 				queue_push(q, t->adj[i]);
@@ -299,6 +296,7 @@ void CheckAdjacentNode(List_Adj* list)
 {
 	for (int i = 0; i < list->len; i++)
 	{
+
 		//left Adj
 		if (i != 0 && // Si pas pixel blanc #1 (Erreur except levée)
 			list->nodes[i].position.x - 1 == list->nodes[i - 1].position.x &&
@@ -312,7 +310,8 @@ void CheckAdjacentNode(List_Adj* list)
 		{
 			int pos = i;
 			while (pos != -1 &&
-				list->nodes[pos].position.y != -1)
+				list->nodes[pos].position.y != -1 &&
+				list->nodes[i].position.y - 2 != list->nodes[pos].position.y )
 			{
 				if (list->nodes[i].position.x == list->nodes[pos].position.x &&
 					list->nodes[i].position.y - 1 == list->nodes[pos].position.y)
