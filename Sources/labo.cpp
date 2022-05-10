@@ -24,7 +24,7 @@ List_Adj* create_list(size_t max_nodes) {
 		n->data.g = NULL;
 		n->data.b = NULL;
 
-		n->path_from = UINT64_MAX;
+		n->path_from = NULL;
 	}
 
 
@@ -74,7 +74,7 @@ void add_node_list(List_Adj* list, rgb* data, Vector2 pos) {
 	n->position = pos;
 }
 
-void add_adj(List_Adj* list, int fromNode, int toNode, uint8_t cost) // New and might not work
+void add_adj(List_Adj* list, int fromNode, int toNode, uint8_t cost)
 {
 	int from_len = list->nodes[fromNode].len;
 	list->nodes[fromNode].adj[from_len] = &list->nodes[toNode];
@@ -95,7 +95,7 @@ void add_edge(AdjMatrix* graph, int fromNode, int toNode, uint8_t cost)
 
 
 
-double CtoEnd(AdjMatrix* graph, Node* from, Node* to)
+double CtoEnd_Matrix(Node* from, Node* to)
 {
 	
 	double x = fabs(from->position.x - to->position.x) * fabs(from->position.x - to->position.x);
@@ -111,6 +111,21 @@ double CtoEnd(AdjMatrix* graph, Node* from, Node* to)
 	return c;
 }
 
+double CtoEnd_List(Node_adj* from, Node_adj* to)
+{
+
+	double x = fabs(from->position.x - to->position.x) * fabs(from->position.x - to->position.x);
+
+	double y = fabs(from->position.y - to->position.y) * fabs(from->position.y - to->position.y);
+
+	double square = x + y;
+
+	double c = sqrt(square);
+
+
+
+	return c;
+}
 
 
 void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
@@ -151,7 +166,6 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 				if (graph->adjGraph[from][to] != 0 &&
 					t == &graph->nodes[from]) // Je pars de la bonne place et il y a un chemin
 				{
-
 					// Si le voisin n'est pas visité et que le coût n'est pas modifié
 					// OU 
 					// Coût node arrivée > coût node depart + coût chemin
@@ -160,7 +174,7 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 						(graph->nodes[to].cost > graph->nodes[from].cost + graph->adjGraph[from][to]))
 					{
 
-						double coutPlus = CtoEnd(graph, &graph->nodes[to], &graph->nodes[endNodeIndex-1]);
+						double coutPlus = CtoEnd_Matrix(&graph->nodes[to], &graph->nodes[endNodeIndex-1]);
 
 						queue_push(q, &graph->nodes[to]);
 						graph->nodes[to].cost = graph->adjGraph[from][to] + t->cost + coutPlus;
@@ -172,14 +186,14 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 	}
 
 	t = &graph->nodes[endNodeIndex - 1];
-	ColorPath(t);
+	ColorPathMatrix(t);
 
 	stack_push(solvedPath, t);
 	while (t != &graph->nodes[startNodeIndex])
 	{
 		t = &graph->nodes[t->path_from];
 
-		ColorPath(t);
+		ColorPathMatrix(t);
 
 		stack_push(solvedPath, t);
 	}
@@ -188,7 +202,64 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 
 void astar_AdjList(List_Adj* list, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
 {
+	while (solvedPath->top != -1)
+	{
+		stack_pop(solvedPath);
+	}
 
+	Queue* q = (Queue*)allocate(sizeof(Queue));
+	queue_init(q);
+
+	Node_adj* t = &list->nodes[startNodeIndex];
+	queue_push(q, t);
+	list->nodes[startNodeIndex].cost = 0;
+
+	int a = 0;
+	int b = 0;
+	while (t != NULL)
+	{
+		printf("Pop #%d\n", a++);
+		t = (Node_adj*)queue_pop(q);
+		if (t == NULL || (t->position.x == 0 && t->position.y == 0))
+		{
+			break;
+		}
+		t->visited = 1;
+
+		if (t == &list->nodes[endNodeIndex])
+		{
+			break;
+		}
+
+		
+		for (int i = 0; i < t->len; i++)
+		{
+			if ((t->adj[i]->visited == 0 &&
+				t->adj[i]->cost == UINT64_MAX) ||
+				t->adj[i]->cost > t->cost)
+			{
+				double coutPlus = CtoEnd_List(t->adj[i], &list->nodes[endNodeIndex - 1]);
+
+				queue_push(q, t->adj[i]);
+				t->adj[i]->cost = t->cost + coutPlus;
+				t->adj[i]->path_from = t;
+			}
+		}
+
+	}
+
+	t = &list->nodes[endNodeIndex-1];
+	ColorPathList(t);
+
+	stack_push(solvedPath, t);
+	while (t != &list->nodes[startNodeIndex])
+	{
+		t = t->path_from;
+
+		ColorPathList(t);
+
+		stack_push(solvedPath, t);
+	}
 }
 
 void CheckAdjacencyMatrix(AdjMatrix* graph)
@@ -234,7 +305,6 @@ void CheckAdjacentNode(List_Adj* list)
 			list->nodes[i].position.y == list->nodes[i - 1].position.y)
 		{
 			add_adj(list, i, i - 1, 1);
-			add_adj(list, i - 1, i, 1);
 		}
 
 		//top Adj
@@ -248,7 +318,6 @@ void CheckAdjacentNode(List_Adj* list)
 					list->nodes[i].position.y - 1 == list->nodes[pos].position.y)
 				{
 					add_adj(list, i, pos, 1);
-					add_adj(list, pos, i, 1);
 				}
 
 				pos--;
@@ -257,7 +326,14 @@ void CheckAdjacentNode(List_Adj* list)
 	}
 }
 
-void ColorPath(Node* node)
+void ColorPathMatrix(Node* node)
+{
+	node->data.r = 255;
+	node->data.g = 0;
+	node->data.b = 0;
+}
+
+void ColorPathList(Node_adj* node)
 {
 	node->data.r = 255;
 	node->data.g = 0;

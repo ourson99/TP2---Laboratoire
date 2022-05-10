@@ -61,7 +61,7 @@ struct Node_adj
 	char len;
 	Node_adj* adj[4];
 
-	uint64_t path_from;
+	Node_adj* path_from;
 	uint8_t visited;
 };
 
@@ -100,11 +100,15 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 
 void astar_AdjList(List_Adj* list, int startNodeIndex, int endNodeIndex, Stack* solvedPath);
 
-double CtoEnd(AdjMatrix* graph, Node* from, Node* to);
+double CtoEnd_Matrix(Node* from, Node* to);
+
+double CtoEnd_List(Node_adj* from, Node_adj* to);
 
 void CheckAdjacencyMatrix(AdjMatrix* graph);
 
 void CheckAdjacentNode(List_Adj* list);
 
-void ColorPath(Node* node);
+void ColorPathMatrix(Node* node);
+
+void ColorPathList(Node_adj* node);
 

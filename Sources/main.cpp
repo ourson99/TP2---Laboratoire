@@ -66,6 +66,7 @@ void* queue_pop(Queue* q) {
 	}
 }
 
+
 #define HEAP_SIZE (UINT32_MAX * UINT32_MAX) * 9999999999
 static uint8_t* heap = NULL;
 static size_t heap_top = 0;
@@ -76,101 +77,129 @@ void* allocate(size_t size) {
 	return &heap[old_top];
 }
 
+
+
+
+
 int main(int argc, char** argv) {
 	heap = (uint8_t*)malloc(HEAP_SIZE);
 	assert(heap != NULL);
 	OPTICK_APP("ConsoleApp");
 	
-
+	// ------------------------------------------------------------------ IMPORTANT, Matrix = 0, List = 1
+	bool Matrix_Or_List = 1;
 	
-	int width, height, channels;
-	unsigned char* img_matrix = stbi_load("31.bmp", &width, &height, &channels, 0);
-	if (img_matrix == NULL) {
-		printf("Error in loading the image\n");
-		exit(1);
-	
-	}
-	printf("Loaded img_matrix with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
-	
-	size_t img_size = width * height * channels;
-
-	// -------------------------------------------------------------
-	unsigned char* img_list = stbi_load("31.bmp", &width, &height, &channels, 0);
-	if (img_matrix == NULL) {
-		printf("Error in loading the image\n");
-		exit(1);
-
-	}
-	printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
-
-
-
-
-	AdjMatrix* graph = create_graph(img_size);
-	List_Adj* list = create_list(img_size);
-
-	rgb couleurs;
-	Vector2 position;
-	for (int i = 0; i < img_size; i += 3)
+	if (Matrix_Or_List == 0) // -------------------------------------------Matrice--------------------------------------------------------------------------------------
 	{
-		if (img_matrix[i] == 255 && img_matrix[i + 1] == 255 && img_matrix[i + 2] == 255)
-		{
-			couleurs.r = img_matrix[i];
-			couleurs.g = img_matrix[i + 1];
-			couleurs.b = img_matrix[i + 2];
+		int width_matrix, height_matrix, channels_matrix;
+		unsigned char* img_matrix = stbi_load("31.bmp", &width_matrix, &height_matrix, &channels_matrix, 0);
+		if (img_matrix == NULL) {
+			printf("Error in loading the image\n");
+			exit(1);
 
-			position.x = (i / 3) % width;
-			position.y = (i / 3) / width;
-
-
-			add_node(graph, &couleurs, position);
-			add_node_list(list, &couleurs, position);
 		}
+		printf("Loaded img_matrix with a width of %dpx, a height of %dpx and %d channels\n", width_matrix, height_matrix, channels_matrix);
+
+		size_t img_size_matrix = width_matrix * height_matrix * channels_matrix;
+
+
+		AdjMatrix* graph = create_graph(img_size_matrix);
+
+
+		rgb couleurs;
+		Vector2 position;
+		for (int i = 0; i < img_size_matrix; i += 3)
+		{
+			if (img_matrix[i] == 255 && img_matrix[i + 1] == 255 && img_matrix[i + 2] == 255)
+			{
+				couleurs.r = img_matrix[i];
+				couleurs.g = img_matrix[i + 1];
+				couleurs.b = img_matrix[i + 2];
+
+				position.x = (i / 3) % width_matrix;
+				position.y = (i / 3) / width_matrix;
+
+
+				add_node(graph, &couleurs, position);
+				//add_node_list(list, &couleurs, position);
+			}
+		}
+		CheckAdjacencyMatrix(graph);
+		//CheckAdjacentNode(list);
+		graph->len;
+		Stack path = stack_init(graph->len);
+		astar_AdjMatrix(graph, 0, graph->len, &path);
+
+		int cM = 0;
+		for (int i = 0; i < img_size_matrix; i += 3)
+		{
+			// Si le pixel est blanc, assigne la valeur de couleur du graph à l'image
+			if (img_matrix[i] == 255 && img_matrix[i + 1] == 255 && img_matrix[i + 2] == 255)
+			{
+				img_matrix[i] = graph->nodes[cM].data.r;
+				img_matrix[i + 1] = graph->nodes[cM].data.g;
+				img_matrix[i + 2] = graph->nodes[cM].data.b;
+				cM++;
+			}
+		}
+
+		stbi_write_png("Matrice_Adj.png", width_matrix, height_matrix, channels_matrix, img_matrix, width_matrix * channels_matrix);
 	}
-	CheckAdjacencyMatrix(graph);
-	CheckAdjacentNode(list);
-
-	
-	// --------------------------------------------------------------------------------------------
-	
-	// --------------------------------------------------   Adjmatrix
-	Stack path = stack_init(graph->len);
-	astar_AdjMatrix(graph, 0, graph->len, &path);
-
-	int cM = 0;
-	for (int i = 0; i < img_size; i += 3)
+	else // -------------------------------------------List--------------------------------------------------------------------------------------
 	{
-		// Si le pixel est blanc, assigne la valeur de couleur du graph à l'image
-		if (img_matrix[i] == 255 && img_matrix[i + 1] == 255 && img_matrix[i + 2] == 255)
-		{
-			img_matrix[i] = graph->nodes[cM].data.r;
-			img_matrix[i+1] = graph->nodes[cM].data.g;
-			img_matrix[i+2] = graph->nodes[cM].data.b;
-			cM++;
+		int width_list, height_list, channels_list;
+		unsigned char* img_list = stbi_load("combo400.png", &width_list, &height_list, &channels_list, 0);
+		if (img_list == NULL) {
+			printf("Error in loading the image\n");
+			exit(1);
+
 		}
-	}
+		printf("Loaded img_list with a width of %dpx, a height of %dpx and %d channels\n", width_list, height_list, channels_list);
+		
+		size_t img_size_list = width_list * height_list * channels_list;
 
-	stbi_write_png("Matrice_Adj.png", width, height, channels, img_matrix, width * channels);
+		List_Adj* list = create_list(img_size_list);
 
-
-
-	// --------------------------------------------------   Adjlist
-	astar_AdjList(list, 0, graph->len, &path);
-
-	int cL = 0;
-	for (int i = 0; i < img_size; i += 3)
-	{
-		// Si le pixel est blanc, assigne la valeur de couleur du graph à l'image
-		if (img_matrix[i] == 255 && img_matrix[i + 1] == 255 && img_matrix[i + 2] == 255)
+		rgb couleurs;
+		Vector2 position;
+		for (int i = 0; i < img_size_list; i += 3)
 		{
-			img_matrix[i] = list->nodes[cL].data.r;
-			img_matrix[i + 1] = list->nodes[cL].data.g;
-			img_matrix[i + 2] = list->nodes[cL].data.b;
-			cL++;
-		}
-	}
+			if (img_list[i] == 255 && img_list[i + 1] == 255 && img_list[i + 2] == 255)
+			{
+				couleurs.r = img_list[i];
+				couleurs.g = img_list[i + 1];
+				couleurs.b = img_list[i + 2];
 
-	stbi_write_png("List_Adj.png", width, height, channels, img_matrix, width * channels);
+				position.x = (i / 3) % width_list;
+				position.y = (i / 3) / width_list;
+
+
+				add_node_list(list, &couleurs, position);
+			}
+		}
+		CheckAdjacentNode(list);
+
+
+
+		Stack path = stack_init(list->len);
+		astar_AdjList(list, 0, list->len, &path);
+
+		int cL = 0;
+		for (int i = 0; i < img_size_list; i += 3)
+		{
+			// Si le pixel est blanc, assigne la valeur de couleur du graph à l'image
+			if (img_list[i] == 255 && img_list[i + 1] == 255 && img_list[i + 2] == 255)
+			{
+				img_list[i] = list->nodes[cL].data.r;
+				img_list[i + 1] = list->nodes[cL].data.g;
+				img_list[i + 2] = list->nodes[cL].data.b;
+				cL++;
+			}
+		}
+
+		stbi_write_png("List_Adj.png", width_list, height_list, channels_list, img_list, width_list * channels_list);
+	}
+	
 	
 	return 0;
 }
