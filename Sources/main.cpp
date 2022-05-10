@@ -78,7 +78,18 @@ void* allocate(size_t size) {
 }
 
 
+/*
+	Les deux méthodes utilisées dans ce tp pour créer le chemin de sortie du labyrinthe ne sont pas d'égale performance dans ce cas-ci.
 
+	La matrice d'adjacence vient comparer chaque node du graph (Celui-ci étant de len = pixels blancs de l'image) avec tout les autres nodes,
+	astar avec cette méthode vient donc créer une execution de n x n.
+
+	De l'autre côté, la liste d'adjacence ne créer des voisins que si elle est en contact physique avec. Dans le cas du labyrinthe, cela veut dire que
+	c'est un maximum de 4 voisins. Astar dans ce cas-ci vient créer une execution de n. (avec quelques surplus, mais ce sont des chiffres statiques, donc on enlève)
+
+	De ce point de vue, il est plus favorable d'utiliser la liste d'adjacence dans notre situation.
+
+*/
 
 
 int main(int argc, char** argv) {
