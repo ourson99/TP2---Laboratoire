@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "optick.h"
+
+
 List_Adj* create_list(size_t max_nodes) {
 	List_Adj* list = (List_Adj*)allocate(sizeof(List_Adj));
 	list->len = 0;
@@ -129,6 +132,8 @@ double CtoEnd_List(Node_adj* from, Node_adj* to)
 
 void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
 {
+	OPTICK_EVENT("Matrix A*");
+
 	while (solvedPath->top != -1)
 	{
 		stack_pop(solvedPath);
@@ -201,6 +206,7 @@ void astar_AdjMatrix(AdjMatrix* graph, int startNodeIndex, int endNodeIndex, Sta
 
 void astar_AdjList(List_Adj* list, int startNodeIndex, int endNodeIndex, Stack* solvedPath)
 {
+	OPTICK_EVENT("List A*");
 	while (solvedPath->top != -1)
 	{
 		stack_pop(solvedPath);
@@ -261,6 +267,7 @@ void astar_AdjList(List_Adj* list, int startNodeIndex, int endNodeIndex, Stack* 
 
 void CheckAdjacencyMatrix(AdjMatrix* graph)
 {
+	OPTICK_EVENT("Matrix Adj");
 	for (int i = 0; i < graph->len; i++)
 	{
 		//left Adj
@@ -294,6 +301,7 @@ void CheckAdjacencyMatrix(AdjMatrix* graph)
 
 void CheckAdjacentNode(List_Adj* list)
 {
+	OPTICK_EVENT("List Adj");
 	for (int i = 0; i < list->len; i++)
 	{
 

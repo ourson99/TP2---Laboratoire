@@ -107,7 +107,6 @@ int main(int argc, char** argv) {
 		if (img_matrix == NULL) {
 			printf("Error in loading the image\n");
 			exit(1);
-
 		}
 		printf("Loaded img_matrix with a width of %dpx, a height of %dpx and %d channels\n", width_matrix, height_matrix, channels_matrix);
 
@@ -132,11 +131,9 @@ int main(int argc, char** argv) {
 
 
 				add_node(graph, &couleurs, position);
-				//add_node_list(list, &couleurs, position);
 			}
 		}
 		CheckAdjacencyMatrix(graph);
-		//CheckAdjacentNode(list);
 		graph->len;
 		Stack path = stack_init(graph->len);
 		astar_AdjMatrix(graph, 0, graph->len, &path);
@@ -188,17 +185,13 @@ int main(int argc, char** argv) {
 				add_node_list(list, &couleurs, position);
 			}
 		}
-		printf("Pre checkAdjNode\n");
 
 		CheckAdjacentNode(list);
 
-		printf("Post checkAdjNode\n");
 
 		Stack path = stack_init(list->len);
 
-		printf("Pre astar\n");
 		astar_AdjList(list, 0, list->len, &path);
-		printf("Post astar\n");
 
 		int cL = 0;
 		for (int i = 0; i < img_size_list; i += 3)
